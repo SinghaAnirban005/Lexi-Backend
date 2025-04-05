@@ -1,63 +1,58 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
+generator go {
+  provider = "go run github.com/steebchen/prisma-client-go"
+  output   = "./prisma/generated"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id            String  @id @default(uuid())
+  id            String         @id @default(uuid())
   FullName      String
-  username      String  @unique
-  email         String  @unique
+  username      String         @unique
+  email         String         @unique
   password      String
   conversations Conversation[]
 }
 
 model Conversation {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   ownerId   String
-  user      User      @relation(fields: [ownerId], references: [id])
-  prompts   Prompt[]
   Title     String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [ownerId], references: [id])
+  prompts   Prompt[]
 }
 
 model Prompt {
-  id            String          @id @default(uuid())
-  prompt_title  String
-  tags          PromptTag[]
-  responses     Response[]
+  id             String       @id @default(uuid())
+  prompt_title   String
   conversationId String
-  conversation  Conversation    @relation(fields: [conversationId], references: [id])
-  createdAt     DateTime        @default(now())
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  tags           PromptTag[]
+  responses      Response[]
 }
 
 model Response {
-  id        String     @id @default(uuid())
+  id        String   @id @default(uuid())
   response  String
-  promptId   String
-  prompt    Prompt     @relation(fields: [promptId], references: [id])
-  createdAt DateTime   @default(now())
+  promptId  String
+  createdAt DateTime @default(now())
+  prompt    Prompt   @relation(fields: [promptId], references: [id])
 }
 
 model Tag {
-  id        String      @id  @default(uuid())
-  tag_name  String      @unique
-  prompts   PromptTag[]
+  id       String      @id @default(uuid())
+  tag_name String      @unique
+  prompts  PromptTag[]
 }
 
 model PromptTag {
   promptId String
   tagId    String
-
   prompt   Prompt @relation(fields: [promptId], references: [id])
   tag      Tag    @relation(fields: [tagId], references: [id])
 
