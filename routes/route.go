@@ -1,18 +1,19 @@
 package route
 
 import (
+	controller "github.com/SinghaAnirban005/Lexi-Backend/controllers"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 func SetUpRoutes(app *fiber.App, db *gorm.DB) {
-	app.Post("/signup", Signup(db))
-	app.Post("/login", Login(db))
+	app.Post("/signup", controller.SignUp(db))
+	app.Post("/login", controller.Login(db))
 
-	auth := app.Group("/api", AuthMiddleware())
-	auth.Post("/conversations", CreateConversation(db))
-	auth.Get("/conversations", GetUserConversations(db))
-	auth.Post("/prompts", CreatePromptWithResponse(db))
-	auth.Post("/tags", CreateTag(db))
-	auth.Post("/prompts/:promptId/tags", AssignTagsToPrompt(db))
+	// auth := app.Group("/api", AuthMiddleware())
+	// auth.Post("/conversations", CreateConversation(db))
+	// auth.Get("/conversations", GetUserConversations(db))
+	// auth.Post("/prompts", CreatePromptWithResponse(db))
+	// auth.Post("/tags", CreateTag(db))
+	// auth.Post("/prompts/:promptId/tags", AssignTagsToPrompt(db))
 }
