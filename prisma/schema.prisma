@@ -12,3 +12,54 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+model User {
+  id            String  @id @default(uuid())
+  FullName      String
+  username      String  @unique
+  email         String  @unique
+  password      String
+  conversations Conversation[]
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  ownerId   String
+  user      User      @relation(fields: [ownerId], references: [id])
+  prompts   Prompt[]
+  Title     String
+  createdAt DateTime  @default(now())
+}
+
+model Prompt {
+  id            String          @id @default(uuid())
+  prompt_title  String
+  tags          PromptTag[]
+  responses     Response[]
+  conversationId String
+  conversation  Conversation    @relation(fields: [conversationId], references: [id])
+  createdAt     DateTime        @default(now())
+}
+
+model Response {
+  id        String     @id @default(uuid())
+  response  String
+  promptId   String
+  prompt    Prompt     @relation(fields: [promptId], references: [id])
+  createdAt DateTime   @default(now())
+}
+
+model Tag {
+  id        String      @id  @default(uuid())
+  tag_name  String      @unique
+  prompts   PromptTag[]
+}
+
+model PromptTag {
+  promptId String
+  tagId    String
+
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+  tag      Tag    @relation(fields: [tagId], references: [id])
+
+  @@id([promptId, tagId])
+}
