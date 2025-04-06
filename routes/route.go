@@ -10,10 +10,10 @@ func SetUpRoutes(app *fiber.App, db *gorm.DB) {
 	app.Post("/signup", controller.SignUp(db))
 	app.Post("/login", controller.Login(db))
 
-	// auth := app.Group("/api", AuthMiddleware())
-	// auth.Post("/conversations", CreateConversation(db))
-	// auth.Get("/conversations", GetUserConversations(db))
-	// auth.Post("/prompts", CreatePromptWithResponse(db))
+	auth := app.Group("/api", controller.AuthMiddleware())
+	auth.Post("/conversations", controller.CreateConversation(db))
+	auth.Get("/conversations", controller.GetUserConversations(db))
+	auth.Post("/prompts", controller.CreatePromptWithResponse(db))
 	// auth.Post("/tags", CreateTag(db))
 	// auth.Post("/prompts/:promptId/tags", AssignTagsToPrompt(db))
 }

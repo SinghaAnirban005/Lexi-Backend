@@ -2,16 +2,20 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/SinghaAnirban005/Lexi-Backend/models"
 	route "github.com/SinghaAnirban005/Lexi-Backend/routes"
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func main() {
-	dsn := "postgresql://neondb_owner:npg_8sUYPFLmvq1k@ep-divine-heart-a5mdcy8k-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+
+	godotenv.Load()
+	dsn := os.Getenv("DB_URL")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
