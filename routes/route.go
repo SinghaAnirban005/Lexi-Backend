@@ -14,6 +14,6 @@ func SetUpRoutes(app *fiber.App, db *gorm.DB) {
 	auth.Post("/conversations", controller.CreateConversation(db))
 	auth.Get("/conversations", controller.GetUserConversations(db))
 	auth.Post("/prompts", controller.CreatePromptWithResponse(db))
-	// auth.Post("/tags", CreateTag(db))
-	// auth.Post("/prompts/:promptId/tags", AssignTagsToPrompt(db))
+	auth.Post("/tags", controller.CreateTag(db))
+	auth.Post("/prompts/:promptId/tags", controller.AssignTagsToPrompt(db))
 }
