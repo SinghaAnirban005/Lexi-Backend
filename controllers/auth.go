@@ -48,6 +48,15 @@ func Login(db *gorm.DB) fiber.Handler {
 		}
 
 		token := utils.GenerateToken(user.ID.String())
-		return c.JSON(fiber.Map{"token": token})
+
+		cookie := new(fiber.Cookie)
+		cookie.Name = "token"
+		cookie.Value = token
+		cookie.HTTPOnly = true
+		cookie.Secure = true
+		cookie.SameSite = "Lax"
+		c.Cookie(cookie)
+
+		return c.JSON(fiber.Map{"token": token, "username": user.Username, "email": user.Email})
 	}
 }
