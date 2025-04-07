@@ -49,11 +49,13 @@ func Login(db *gorm.DB) fiber.Handler {
 
 		token := utils.GenerateToken(user.ID.String())
 
+		c.Set("Authorization", "Bearer "+token)
+
 		cookie := new(fiber.Cookie)
 		cookie.Name = "token"
 		cookie.Value = token
 		cookie.HTTPOnly = true
-		cookie.Secure = true
+		cookie.Secure = false
 		cookie.SameSite = "Lax"
 		c.Cookie(cookie)
 

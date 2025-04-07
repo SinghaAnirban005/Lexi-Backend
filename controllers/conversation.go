@@ -19,8 +19,20 @@ const LLMapiEndpoint = "https://api.groq.com/openai/v1/chat/completions"
 func CreateConversation(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userID := c.Locals("userID").(string)
-		title := c.FormValue("title")
-		conv := models.Conversation{Title: title, OwnerID: uuid.MustParse(userID)}
+
+		var payload struct {
+			Title string `json:"title"`
+		}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON",
+			})
+		}
+
+		conv := models.Conversation{
+			Title:   payload.Title,
+			OwnerID: uuid.MustParse(userID),
+		}
 		db.Create(&conv)
 
 		return c.JSON(conv)

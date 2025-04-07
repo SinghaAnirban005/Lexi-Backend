@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"strings"
 
 	"github.com/SinghaAnirban005/Lexi-Backend/utils"
@@ -25,25 +26,26 @@ func AuthMiddleware() fiber.Handler {
 	}
 }
 
-// Helper function to extract token from multiple sources
 func extractToken(c *fiber.Ctx) string {
-	// 1. Check Authorization header (Bearer token)
+	log.Println("All headers:", c.GetReqHeaders())
+	// log.Println("All cookies:", c.Cookies())
+
 	bearerToken := c.Get("Authorization")
 	if len(bearerToken) > 7 && strings.ToUpper(bearerToken[0:6]) == "BEARER" {
 		return bearerToken[7:]
 	}
 
-	// 2. Check query parameter
 	token := c.Query("token")
 	if token != "" {
 		return token
 	}
 
-	// 3. Check cookie
 	cookieToken := c.Cookies("token")
 	if cookieToken != "" {
 		return cookieToken
 	}
+
+	log.Println("Cookiees --> ", cookieToken)
 
 	return ""
 }
