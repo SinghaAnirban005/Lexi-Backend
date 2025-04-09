@@ -113,3 +113,54 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 		return c.JSON(fiber.Map{"prompt": prompt, "response": response})
 	}
 }
+
+func GetPromptsByConversation(db *gorm.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := c.Locals("userID").(string)
+		if userID == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Unauthorized",
+			})
+		}
+
+		conversationID := c.Params("conversation_id")
+		if conversationID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Conversation ID is required",
+			})
+		}
+
+		convUUID, err := uuid.Parse(conversationID)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid conversation ID format",
+			})
+		}
+
+		var conversation models.Conversation
+		if err := db.Where("id = ? AND owner_id = ?", convUUID, userID).First(&conversation).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"error": "Conversation not found or access denied",
+				})
+			}
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to verify conversation ownership",
+			})
+		}
+
+		var prompts []models.Prompt
+		if err := db.Where("conversation_id = ?", convUUID).
+			Preload("Responses").
+			Find(&prompts).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to fetch prompts",
+			})
+		}
+
+		return c.JSON(fiber.Map{
+			"conversation_id": conversationID,
+			"prompts":         prompts,
+		})
+	}
+}
