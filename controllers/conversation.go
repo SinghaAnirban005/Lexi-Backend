@@ -48,7 +48,7 @@ func GetUserConversations(db *gorm.DB) fiber.Handler {
 
 func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Parse payload
+
 		var payload struct {
 			ConversationID string `json:"conversation_id"`
 			PromptTitle    string `json:"prompt_title"`
@@ -57,7 +57,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid payload"})
 		}
 
-		// Create prompt record
 		prompt := models.Prompt{
 			PromptTitle:    payload.PromptTitle,
 			ConversationID: uuid.MustParse(payload.ConversationID),
@@ -68,7 +67,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 			})
 		}
 
-		// Prepare LLM request
 		llmRequest := map[string]interface{}{
 			"model": "llama-3.1-8b-instant",
 			"messages": []map[string]interface{}{
@@ -98,7 +96,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+"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")
 
-		// Send request
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
@@ -108,7 +105,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 		}
 		defer resp.Body.Close()
 
-		// Read response
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
@@ -116,7 +112,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 			})
 		}
 
-		// Parse response
 		var llmResp struct {
 			Choices []struct {
 				Message struct {
@@ -135,14 +130,12 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 			})
 		}
 
-		// Check for API errors
 		if llmResp.Error != nil {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 				"error": "AI API error: " + llmResp.Error.Message,
 			})
 		}
 
-		// Handle empty choices
 		if len(llmResp.Choices) == 0 {
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 				"error":        "AI API returned no choices",
@@ -150,7 +143,6 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 			})
 		}
 
-		// Create response record
 		response := models.Response{
 			Response: llmResp.Choices[0].Message.Content,
 			PromptID: prompt.ID,

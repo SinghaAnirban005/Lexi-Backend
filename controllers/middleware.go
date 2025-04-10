@@ -10,7 +10,6 @@ import (
 
 func AuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Check for token in multiple locations
 		token := extractToken(c)
 		if token == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Authorization token required"})
