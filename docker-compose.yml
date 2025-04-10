@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lexibackend
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - lexinet
+  
+  app:
+      build: .
+      ports:
+        - "8080:8080"
+      environment:
+        - DB_HOST=db
+        - DB_PORT=5432
+        - DB_USER=postgres
+        - DB_PASSWORD=postgres
+        - DB_NAME=lexibackend
+        - LLM_API_KEY=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
+      depends_on:
+        - db
+      restart: unless-stopped
+      networks:
+        - lexinet
+
+volumes:
+  postgres_data:
+
+
+networks:
+  lexinet:
+    driver: bridge

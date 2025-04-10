@@ -3,10 +3,8 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/SinghaAnirban005/Lexi-Backend/models"
 	"github.com/gofiber/fiber/v2"
@@ -50,6 +48,7 @@ func GetUserConversations(db *gorm.DB) fiber.Handler {
 
 func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		// Parse payload
 		var payload struct {
 			ConversationID string `json:"conversation_id"`
 			PromptTitle    string `json:"prompt_title"`
@@ -57,60 +56,115 @@ func CreatePromptWithResponse(db *gorm.DB) fiber.Handler {
 		if err := c.BodyParser(&payload); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid payload"})
 		}
-		prompt := models.Prompt{PromptTitle: payload.PromptTitle, ConversationID: uuid.MustParse(payload.ConversationID)}
-		db.Create(&prompt)
 
+		// Create prompt record
+		prompt := models.Prompt{
+			PromptTitle:    payload.PromptTitle,
+			ConversationID: uuid.MustParse(payload.ConversationID),
+		}
+		if err := db.Create(&prompt).Error; err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to create prompt",
+			})
+		}
+
+		// Prepare LLM request
 		llmRequest := map[string]interface{}{
-			"model": "llama3-70b-8192",
+			"model": "llama-3.1-8b-instant",
 			"messages": []map[string]interface{}{
 				{
 					"role": "user",
 					"content": []map[string]string{
-						{
-							"type": "text",
-							"text": payload.PromptTitle,
-						},
+						{"type": "text", "text": payload.PromptTitle},
 					},
 				},
 			},
 			"stream": false,
 		}
 
-		reqBody, _ := json.Marshal(llmRequest)
-		req, _ := http.NewRequest("POST", LLMapiEndpoint, bytes.NewBuffer(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Bearer "+os.Getenv("LLM_API_KEY"))
+		reqBody, err := json.Marshal(llmRequest)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to prepare AI request",
+			})
+		}
 
+		req, err := http.NewRequest("POST", LLMapiEndpoint, bytes.NewBuffer(reqBody))
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to create AI request",
+			})
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+"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")
+
+		// Send request
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to contact AI API"})
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to contact AI API",
+			})
 		}
 		defer resp.Body.Close()
-		fmt.Println(os.Getenv("LLM_API_KEY"))
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 
+		// Read response
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to read AI response",
+			})
+		}
+
+		// Parse response
 		var llmResp struct {
 			Choices []struct {
 				Message struct {
 					Content string `json:"content"`
 				} `json:"message"`
 			} `json:"choices"`
+			Error *struct {
+				Message string `json:"message"`
+			} `json:"error,omitempty"`
 		}
 
 		if err := json.Unmarshal(bodyBytes, &llmResp); err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse AI response"})
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error":        "Failed to parse AI response",
+				"raw_response": string(bodyBytes),
+			})
 		}
 
-		generated := llmResp.Choices[0].Message.Content
+		// Check for API errors
+		if llmResp.Error != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "AI API error: " + llmResp.Error.Message,
+			})
+		}
 
+		// Handle empty choices
+		if len(llmResp.Choices) == 0 {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error":        "AI API returned no choices",
+				"raw_response": string(bodyBytes),
+			})
+		}
+
+		// Create response record
 		response := models.Response{
-			Response: generated,
+			Response: llmResp.Choices[0].Message.Content,
 			PromptID: prompt.ID,
 		}
-		db.Create(&response)
+		if err := db.Create(&response).Error; err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to save response",
+			})
+		}
 
-		return c.JSON(fiber.Map{"prompt": prompt, "response": response})
+		return c.JSON(fiber.Map{
+			"prompt":   prompt,
+			"response": response,
+		})
 	}
 }
 
