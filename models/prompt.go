@@ -13,7 +13,6 @@ type Prompt struct {
 	ConversationID uuid.UUID    `gorm:"type:uuid" json:"conversation_id"`
 	CreatedAt      time.Time    `gorm:"autoCreateTime" json:"created_at"`
 	Conversation   Conversation `gorm:"foreignKey:ConversationID;constraint:OnDelete:CASCADE;" json:"conversation"`
-	Tags           []PromptTag  `gorm:"foreignKey:PromptID" json:"tags"`
 	Responses      []Response   `gorm:"foreignKey:PromptID" json:"responses"`
 }
 

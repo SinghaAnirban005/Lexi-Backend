@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/SinghaAnirban005/Lexi-Backend/models"
 	route "github.com/SinghaAnirban005/Lexi-Backend/routes"
@@ -17,14 +16,15 @@ import (
 func main() {
 
 	godotenv.Load()
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	// host := os.Getenv("DB_HOST")
+	// port := os.Getenv("DB_PORT")
+	// user := os.Getenv("DB_USER")
+	// password := os.Getenv("DB_PASSWORD")
+	// dbname := os.Getenv("DB_NAME")
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	// dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	// 	host, port, user, password, dbname)
+	dsn := fmt.Sprintf("postgresql://neondb_owner:npg_8sUYPFLmvq1k@ep-divine-heart-a5mdcy8k-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require")
 	// dsn := os.Getenv("DB_URL")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal("Could not connect to DB", err)
 	}
 
-	db.AutoMigrate(&models.User{}, &models.Conversation{}, &models.Prompt{}, &models.Response{}, &models.Tag{}, &models.PromptTag{})
+	db.AutoMigrate(&models.User{}, &models.Conversation{}, &models.Prompt{}, &models.Response{}, &models.Bookmark{})
 
 	app := fiber.New()
 
