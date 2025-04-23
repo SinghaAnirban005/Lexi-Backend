@@ -31,3 +31,19 @@ func CreateBookmark(db *gorm.DB) fiber.Handler {
 		return c.JSON(bookmark)
 	}
 }
+
+func GetBookmarksByUser(db *gorm.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := c.Locals("userID").(string)
+
+		var bookmarks []models.Bookmark
+		err := db.Preload("Conversation").Where("user_id = ?", uuid.MustParse(userID)).Find(&bookmarks).Error
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to fetch bookmarks",
+			})
+		}
+
+		return c.JSON(bookmarks)
+	}
+}

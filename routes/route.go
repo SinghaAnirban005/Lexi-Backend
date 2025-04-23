@@ -16,4 +16,5 @@ func SetUpRoutes(app *fiber.App, db *gorm.DB) {
 	auth.Post("/prompts", controller.CreatePromptWithResponse(db))
 	auth.Get("/prompts/:conversation_id", controller.GetPromptsByConversation(db))
 	auth.Post("/bookmark", controller.CreateBookmark(db))
+	auth.Get("/bookmark", controller.GetBookmarksByUser(db))
 }
