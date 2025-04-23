@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/SinghaAnirban005/Lexi-Backend/models"
 	route "github.com/SinghaAnirban005/Lexi-Backend/routes"
@@ -24,8 +24,8 @@ func main() {
 
 	// dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 	// 	host, port, user, password, dbname)
-	dsn := fmt.Sprintf("postgresql://neondb_owner:npg_8sUYPFLmvq1k@ep-divine-heart-a5mdcy8k-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require")
-	// dsn := os.Getenv("DB_URL")
+	// dsn := fmt.Sprintf(os.Getenv("DB_URL"))
+	dsn := os.Getenv("DB_URL")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
